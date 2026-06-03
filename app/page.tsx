@@ -1,8 +1,8 @@
 import { getAllPosts } from '@/lib/posts';
 import Link from 'next/link';
 
-export default function Home() {
-  const posts = getAllPosts();
+export default async function Home() {
+  const posts = await getAllPosts();
 
   return (
     <main className="min-h-screen">
