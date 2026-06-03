@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body style={{ margin: 0, padding: 0 }}>
         <div style={{ 
           maxWidth: '1100px', 

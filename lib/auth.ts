@@ -7,6 +7,13 @@ export interface AdminSession {
   role: string;
 }
 
+export interface AdminRecord {
+  email: string;
+  password?: string;
+  role?: string;
+  enabled?: boolean;
+}
+
 export async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(password, salt);
@@ -16,10 +23,10 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export async function getAdminByEmail(email: string) {
+export async function getAdminByEmail(email: string): Promise<AdminRecord | null> {
   try {
     const db = await getDatabase();
-    const admin = await db.collection('admins').findOne({ 
+    const admin = await db.collection<AdminRecord>('admins').findOne({ 
       email: email.toLowerCase().trim(),
       enabled: { $ne: false }
     });
@@ -51,6 +58,33 @@ export async function createAdmin(email: string, password: string, role: string 
   }
 }
 
+export async function resetAdminPassword(email: string, password: string) {
+  try {
+    const db = await getDatabase();
+    const hashedPassword = await hashPassword(password);
+
+    await db.collection('admins').updateOne(
+      { email: email.toLowerCase().trim() },
+      {
+        $set: {
+          password: hashedPassword,
+          updatedAt: new Date(),
+          enabled: true,
+        },
+        $setOnInsert: {
+          email: email.toLowerCase().trim(),
+          role: process.env.ADMIN_ROLE || 'owner',
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
+  } catch (error) {
+    console.error('Error resetting admin password:', error);
+    throw error;
+  }
+}
+
 export async function ensureAdminExists() {
   try {
     const email = process.env.ADMIN_EMAIL;
@@ -65,6 +99,9 @@ export async function ensureAdminExists() {
     if (!existingAdmin) {
       await createAdmin(email, password, process.env.ADMIN_ROLE || 'owner');
       console.log('Admin user created');
+    } else if (!existingAdmin.password) {
+      await resetAdminPassword(email, password);
+      console.log('Admin password repaired');
     }
     
     return true;

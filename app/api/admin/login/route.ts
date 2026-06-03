@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminByEmail, verifyPassword } from '@/lib/auth';
+import { getAdminByEmail, resetAdminPassword, verifyPassword } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
@@ -23,8 +23,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isValid = await verifyPassword(password, admin.password);
-    
+    if (!admin.password) {
+      const configuredEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+      const configuredPassword = process.env.ADMIN_PASSWORD;
+
+      if (
+        configuredEmail &&
+        configuredPassword &&
+        admin.email.toLowerCase().trim() === configuredEmail &&
+        password === configuredPassword
+      ) {
+        await resetAdminPassword(email, password);
+      } else {
+        return NextResponse.json(
+          { error: 'Invalid credentials' },
+          { status: 401 }
+        );
+      }
+    }
+
+    const isValid = admin.password
+      ? await verifyPassword(password, admin.password)
+      : password === process.env.ADMIN_PASSWORD;
+
     if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid credentials' },

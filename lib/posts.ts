@@ -1,14 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import remarkRehype from 'remark-rehype';
-import rehypeKatex from 'rehype-katex';
-import rehypeStringify from 'rehype-stringify';
+import { cache } from 'react';
 import { getDatabase } from './mongodb';
+import { markdownToHtml as renderMarkdownToHtml } from './markdown';
 
 const postsDirectory = path.join(process.cwd(), 'content/posts');
 const projectsDirectory = path.join(process.cwd(), 'content/projects');
@@ -25,25 +20,76 @@ export interface Post {
   content: string;
 }
 
+type PostDocument = {
+  slug?: string;
+  title?: string;
+  description?: string;
+  pubDate?: Date | string;
+  updatedDate?: Date | string;
+  author?: string;
+  tags?: string[];
+  bodyMarkdown?: string;
+};
+
+function normalizeDate(value: Date | string | undefined): string {
+  if (!value) {
+    return new Date().toISOString();
+  }
+
+  return value instanceof Date ? value.toISOString() : value;
+}
+
+function normalizeSlug(value: string) {
+  return value.replace(/\.mdx?$/, '');
+}
+
+function toPostFromFile(fileName: string): Post {
+  const slug = normalizeSlug(fileName);
+  const fullPath = path.join(postsDirectory, fileName);
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const { data, content } = matter(fileContents);
+
+  return {
+    slug,
+    title: data.title || '',
+    description: data.description || '',
+    pubDate: normalizeDate(data.pubDate),
+    updatedDate: data.updatedDate ? normalizeDate(data.updatedDate) : undefined,
+    author: data.author,
+    tags: data.tags || [],
+    content,
+  };
+}
+
+function toPostFromDocument(doc: PostDocument): Post | null {
+  if (!doc.slug) {
+    return null;
+  }
+
+  return {
+    slug: doc.slug,
+    title: doc.title || '',
+    description: doc.description || '',
+    pubDate: normalizeDate(doc.pubDate),
+    updatedDate: doc.updatedDate ? normalizeDate(doc.updatedDate) : undefined,
+    author: doc.author,
+    tags: doc.tags || [],
+    content: doc.bodyMarkdown || '',
+  };
+}
+
 async function getMongoDbPosts(): Promise<Post[]> {
   try {
     const db = await getDatabase();
-    const posts = await db.collection('posts')
+    const posts = await db.collection<PostDocument>('posts')
       .find({ published: { $ne: false } })
       .sort({ pubDate: -1 })
       .toArray();
 
-    return posts.map((doc: any) => ({
-      slug: doc.slug,
-      title: doc.title,
-      description: doc.description,
-      pubDate: doc.pubDate?.toISOString() || new Date().toISOString(),
-      updatedDate: doc.updatedDate?.toISOString(),
-      author: doc.author,
-      tags: doc.tags || [],
-      content: doc.bodyMarkdown || ''
-    }));
-  } catch (error) {
+    return posts
+      .map((doc) => toPostFromDocument(doc))
+      .filter((post): post is Post => post !== null);
+  } catch {
     console.warn('MongoDB not available, falling back to file system');
     return [];
   }
@@ -53,72 +99,57 @@ function getFileSystemPosts(): Post[] {
   const fileNames = fs.readdirSync(postsDirectory);
   const posts = fileNames
     .filter(fileName => fileName.endsWith('.md') || fileName.endsWith('.mdx'))
-    .map((fileName) => {
-      const slug = fileName.replace(/\.mdx?$/, '');
-      const fullPath = path.join(postsDirectory, fileName);
-      const fileContents = fs.readFileSync(fullPath, 'utf8');
-      const { data, content } = matter(fileContents);
-
-      return {
-        slug,
-        title: data.title || '',
-        description: data.description || '',
-        pubDate: data.pubDate || new Date().toISOString(),
-        updatedDate: data.updatedDate,
-        author: data.author,
-        tags: data.tags || [],
-        content,
-      };
-    });
+    .map(toPostFromFile);
 
   return posts.sort((a, b) => {
     return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
   });
 }
 
-export async function getAllPosts(): Promise<Post[]> {
-  const mongoPosts = await getMongoDbPosts();
-  
-  if (mongoPosts.length > 0) {
-    return mongoPosts;
+function mergePosts(...sources: Post[][]): Post[] {
+  const postsBySlug = new Map<string, Post>();
+
+  for (const source of sources) {
+    for (const post of source) {
+      postsBySlug.set(post.slug, post);
+    }
   }
-  
-  return getFileSystemPosts();
+
+  return Array.from(postsBySlug.values()).sort((a, b) => {
+    return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
+  });
 }
 
-export function getPostBySlug(slug: string): Post | null {
+export const getAllPosts = cache(async (): Promise<Post[]> => {
+  const mongoPosts = await getMongoDbPosts();
+
+  return mergePosts(getFileSystemPosts(), mongoPosts);
+});
+
+async function getPostBySlugFromFileSystem(slug: string): Promise<Post | null> {
   const fileNames = fs.readdirSync(postsDirectory);
-  const fileName = fileNames.find(f => f.includes(slug));
-  
-  if (!fileName) return null;
+  const fileName = fileNames.find((file) => normalizeSlug(file) === slug);
 
-  const fullPath = path.join(postsDirectory, fileName);
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const { data, content } = matter(fileContents);
+  if (!fileName) {
+    return null;
+  }
 
-  return {
-    slug,
-    title: data.title || '',
-    description: data.description || '',
-    pubDate: data.pubDate || new Date().toISOString(),
-    updatedDate: data.updatedDate,
-    author: data.author,
-    tags: data.tags || [],
-    content,
-  };
+  return toPostFromFile(fileName);
 }
+
+export const getPostBySlug = cache(async (slug: string): Promise<Post | null> => {
+  const mongoPosts = await getMongoDbPosts();
+  const mongoPost = mongoPosts.find((post) => post.slug === slug);
+
+  if (mongoPost) {
+    return mongoPost;
+  }
+
+  return getPostBySlugFromFileSystem(slug);
+});
 
 export async function markdownToHtml(markdown: string): Promise<string> {
-  const result = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkMath)
-    .use(remarkRehype)
-    .use(rehypeKatex)
-    .use(rehypeStringify)
-    .process(markdown);
-
-  return result.toString();
+  return renderMarkdownToHtml(markdown);
 }
 
 export function getAllProjects() {
@@ -139,8 +170,14 @@ export function getAllProjects() {
 }
 
 export function getAllReading() {
+  type ReadingItem = {
+    slug: string;
+    year: number;
+    [key: string]: unknown;
+  };
+
   const fileNames = fs.readdirSync(readingDirectory);
-  return fileNames
+  const items = fileNames
     .filter(fileName => fileName.endsWith('.md'))
     .map((fileName) => {
       const slug = fileName.replace(/\.md$/, '');
@@ -152,6 +189,7 @@ export function getAllReading() {
         slug,
         ...data,
       };
-    })
-    .sort((a: any, b: any) => b.year - a.year);
+    }) as ReadingItem[];
+
+  return items.sort((a, b) => b.year - a.year);
 }

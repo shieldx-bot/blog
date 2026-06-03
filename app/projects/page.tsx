@@ -1,8 +1,10 @@
-import { getAllProjects } from '@/lib/posts';
+import { getAllProjects } from '@/lib/content';
 import Link from 'next/link';
 
-export default function Projects() {
-  const projects = getAllProjects();
+export const dynamic = 'force-dynamic';
+
+export default async function Projects() {
+  const projects = await getAllProjects();
 
   return (
     <main>
@@ -72,6 +74,16 @@ export default function Projects() {
               }}>
                 {project.description}
               </p>
+              {project.content && project.content.trim() && (
+                <p style={{ 
+                  margin: 0, 
+                  color: 'var(--muted)',
+                  fontSize: '0.92rem',
+                  whiteSpace: 'pre-line'
+                }}>
+                  {project.content}
+                </p>
+              )}
               {project.stack && project.stack.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                   {project.stack.map((tech: string) => (

@@ -1,8 +1,10 @@
-import { getAllReading } from '@/lib/posts';
+import { getAllReading } from '@/lib/content';
 import Link from 'next/link';
 
-export default function ReadingList() {
-  const papers = getAllReading();
+export const dynamic = 'force-dynamic';
+
+export default async function ReadingList() {
+  const papers = await getAllReading();
 
   return (
     <main>
@@ -112,6 +114,16 @@ export default function ReadingList() {
                       fontStyle: 'italic'
                     }}>
                       {paper.note}
+                    </p>
+                  )}
+                  {paper.content && paper.content.trim() && (
+                    <p style={{ 
+                      margin: '0.5rem 0 0', 
+                      color: 'var(--text-soft)', 
+                      fontSize: '0.92rem',
+                      whiteSpace: 'pre-line'
+                    }}>
+                      {paper.content}
                     </p>
                   )}
                   {paper.tags && paper.tags.length > 0 && (
