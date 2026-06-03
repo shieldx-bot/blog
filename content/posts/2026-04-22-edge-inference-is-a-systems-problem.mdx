@@ -1,0 +1,28 @@
+---
+title: "Edge Inference Is a Systems Problem"
+description: "A note on why accuracy alone is not enough when inference has to live on constrained devices and unstable networks."
+pubDate: 2026-04-22
+tags: ["EdgeAI", "Inference", "SystemsDesign"]
+author: "Nguyen Van A"
+featured: false
+readingTime: "4 min read"
+---
+
+## Why it matters
+
+At the edge, the model is only one piece of the puzzle. Memory limits, power budgets, deployment cadence, and offline recovery all matter more than benchmark scores.
+
+## Working principle
+
+> A good edge pipeline is one that fails safely, updates cheaply, and still gives you enough telemetry to understand what happened.
+
+## Small checklist
+
+- Keep the model artifact small.
+- Cache what you can locally.
+- Prefer deterministic fallbacks.
+- Emit telemetry even when the model cannot.
+
+## Closing note
+
+The edge rewards systems thinking. The best result is often not the fanciest model, but the one that keeps serving reliably under imperfect conditions.

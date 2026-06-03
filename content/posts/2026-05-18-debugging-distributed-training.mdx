@@ -1,0 +1,35 @@
+---
+title: "Debugging Distributed Training Starts with the Trace"
+description: "A short note on treating observability as a first-class training primitive rather than a postmortem tool."
+pubDate: 2026-05-18
+tags: ["DistributedTraining", "Observability", "MLOps"]
+author: "Nguyen Van A"
+featured: true
+readingTime: "5 min read"
+---
+
+## Problem statement
+
+When training stalls, the first instinct is often to blame the model or the hardware. In practice, the failure is usually a coordination bug: a worker waiting on the wrong barrier, a silent network slowdown, or a scheduling imbalance.
+
+## Rule of thumb
+
+A training system should answer three questions immediately:
+
+1. Which stage is waiting?
+2. Which resource is saturated?
+3. What changed since the last stable run?
+
+## A useful mental model
+
+If throughput is $T$ and synchronization overhead is $S$, then the effective training step cost behaves like:
+
+$$
+Cost_{step} \approx \frac{1}{T} + S
+$$
+
+Reducing $S$ is often easier than pushing $T$ much higher, especially once compute is already well utilized.
+
+## Practical takeaway
+
+Make logs, metrics, and traces visible in the same place. A clean trace is faster than guessing, and guesswork becomes expensive very quickly once a cluster is involved.

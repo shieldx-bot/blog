@@ -1,0 +1,61 @@
+---
+title: 'AI-Native Cloud Systems Need a Different Failure Model'
+description: 'A note on why training jobs, schedulers, and observability should be designed together.'
+pubDate: 2026-05-29
+updatedDate: 2026-05-31
+tags:
+  - CloudInfra
+  - DistributedTraining
+  - Observability
+author: 'Nguyen Van A'
+featured: true
+readingTime: '7 min read'
+---
+
+import Callout from '../../components/Callout.astro';
+
+When a model run spans dozens of GPUs and multiple control planes, the unit of reliability is no longer a single request. It is the whole training trajectory.
+
+## Core thesis
+
+<Callout title="Core Insight">
+Training infrastructure should be designed around the cost of restart, not the cost of steady-state latency.
+</Callout>
+
+A simple way to express the tradeoff is:
+
+$$
+\mathcal{J} = \mathbb{E}[L_{train}] + \lambda L_{retry} + \mu L_{drift}
+$$
+
+This framing keeps attention on the expensive failure modes: checkpoint corruption, scheduler churn, and silent accuracy drift.
+
+## Implementation sketch
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trainer
+spec:
+  replicas: 1
+  template:
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: trainer
+          image: ghcr.io/lab/trainer:latest
+          env:
+            - name: CHECKPOINT_INTERVAL
+              value: '300'
+            - name: OBSERVABILITY_LEVEL
+              value: 'trace'
+```
+
+## What I would optimize first
+
+1. Make checkpoints portable across regions and vendors.
+2. Emit training metrics as first-class artifacts, not debug logs.
+3. Keep the control plane small enough that failure domains remain legible.
+
+The architecture is only elegant when a researcher can explain it on a whiteboard and a platform engineer can keep it alive at 2 a.m.

@@ -1,0 +1,43 @@
+---
+title: 'Measuring Drift in Edge Inference Workloads'
+description: 'A lightweight framework for deciding when to retrain versus when to recalibrate.'
+pubDate: 2026-05-14
+tags:
+  - EdgeAI
+  - Evaluation
+  - MLOps
+author: 'Nguyen Van A'
+featured: false
+readingTime: '6 min read'
+---
+
+import Callout from '../../components/Callout.astro';
+
+Edge inference failures are often subtle: the model keeps returning outputs, but the outputs stop matching the distribution the system was designed for.
+
+## A working threshold
+
+<Callout title="Core Insight">
+Drift is operationally meaningful only when it crosses a threshold tied to product cost, not just statistical distance.
+</Callout>
+
+If $p(x)$ is the training distribution and $q(x)$ is the live distribution, the question is less about whether $D(p, q)$ is non-zero and more about whether the downstream loss grows beyond the retraining budget.
+
+$$
+\Delta = \mathbb{E}_{x \sim q}[\ell(f(x), y)] - \mathbb{E}_{x \sim p}[\ell(f(x), y)]
+$$
+
+## A minimal evaluation loop
+
+```python
+for window in sliding_windows(stream):
+    metrics = evaluator.score(window)
+    if metrics.accuracy < floor or metrics.confidence < min_confidence:
+        alert("retrain or recalibrate")
+```
+
+## Practical takeaway
+
+I prefer alerts that answer one question clearly: is this a model-quality problem, a data-pipeline problem, or an infrastructure problem?
+
+That separation keeps edge deployments debuggable even when the environment is hostile and the signal is noisy.

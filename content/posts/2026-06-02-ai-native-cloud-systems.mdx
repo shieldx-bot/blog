@@ -1,0 +1,54 @@
+---
+title: "Why AI-Native Cloud Systems Need Failure Semantics"
+description: "A research note on making distributed AI services observable, recoverable, and easy to reason about."
+pubDate: 2026-06-02
+updatedDate: 2026-06-02
+tags: ["CloudAI", "DistributedSystems", "Reliability"]
+author: "Nguyen Van A"
+featured: true
+readingTime: "7 min read"
+---
+import Callout from '../../components/Callout.astro';
+
+## Thesis
+
+Most AI products fail at the boundary between model output and system behavior. The model may be correct, but the service still falls apart when retries, queueing, or cold starts accumulate.
+
+The hidden cost is usually in the recovery loop.[^1]
+
+<Callout title="Core Insight">
+The interesting unit of analysis is not just the model step. It is the full execution path from request ingress to model output, post-processing, logging, and recovery.
+</Callout>
+
+## A simple budget
+
+For a request that enters a cloud AI service, the end-to-end cost can be simplified as:
+
+$$
+C_{total} = C_{network} + C_{queue} + C_{compute} + C_{observability}
+$$
+
+If the queue dominates, scaling the model does not help much. If observability is weak, the system may be fast but still impossible to debug.
+
+## Design pattern
+
+```go
+package main
+
+import "time"
+
+type RetryPolicy struct {
+    Budget time.Duration
+    MaxAttempts int
+}
+
+func shouldRetry(attempt int, elapsed time.Duration, policy RetryPolicy) bool {
+    return attempt < policy.MaxAttempts && elapsed < policy.Budget
+}
+```
+
+## What I want to prove next
+
+I want to quantify how often latency spikes come from infrastructure rather than model inference. If the infrastructure term is stable, then most performance work should move up one layer into request shaping and scheduling.
+
+[^1]: The hardest failures are often the ones that appear after the first successful response, when the system has already paid the cost of retries, checkpoints, and recovery.

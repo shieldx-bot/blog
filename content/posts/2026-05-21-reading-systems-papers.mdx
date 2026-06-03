@@ -1,0 +1,43 @@
+---
+title: 'Reading Systems Papers Like an Engineer'
+description: 'How I annotate OSDI papers to recover the design constraints hidden between the lines.'
+pubDate: 2026-05-21
+tags:
+  - PaperReview
+  - Systems
+  - ResearchWorkflow
+author: 'Nguyen Van A'
+featured: false
+readingTime: '5 min read'
+---
+
+import Callout from '../../components/Callout.astro';
+
+A good systems paper is not just an idea. It is a list of constraints, failure cases, and measurements that survive contact with production.
+
+## Three questions I ask first
+
+<Callout title="Core Insight">
+If a paper sounds impressive but does not state what becomes slower, harder, or more expensive, I treat it as incomplete.
+</Callout>
+
+1. What is the actual bottleneck?
+2. Which assumption does the system relax?
+3. What evidence would break the claim?
+
+## My note template
+
+```md
+# Paper title
+- Problem: ...
+- Constraint: ...
+- Mechanism: ...
+- Weakness: ...
+- Relevance to my stack: ...
+```
+
+## Why this matters for Cloud AI
+
+The cloud side of AI research is often dismissed as plumbing, but the plumbing determines whether the experiment can be reproduced, audited, and scaled.
+
+When I write notes this way, I can later turn them into project decisions, design docs, or a lab discussion without rereading the entire paper.
