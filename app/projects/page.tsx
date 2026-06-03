@@ -5,55 +5,102 @@ export default function Projects() {
   const projects = getAllProjects();
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        <nav className="mb-8">
+    <main>
+      <div style={{ maxWidth: '1100px', margin: '2rem auto 0', padding: '0 1.25rem' }}>
+        <nav style={{ marginBottom: '1.5rem' }}>
           <Link 
             href="/" 
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            style={{ 
+              color: 'var(--text-soft)', 
+              fontSize: '0.92rem',
+              fontFamily: 'system-ui, sans-serif'
+            }}
           >
             ← Back to home
           </Link>
         </nav>
 
-        <header className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Projects</h1>
-          <p className="text-xl text-gray-600">
+        <header style={{ marginBottom: '2rem' }}>
+          <h1 style={{
+            margin: 0,
+            color: 'var(--text)',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: 'clamp(2rem, 4vw, 3.25rem)',
+            lineHeight: 1.04,
+            letterSpacing: '-0.06em',
+            fontWeight: 600,
+            marginBottom: '0.65rem'
+          }}>
+            Projects
+          </h1>
+          <p style={{ 
+            margin: 0,
+            maxWidth: '62ch',
+            color: 'var(--text-soft)',
+            fontSize: '1.02rem'
+          }}>
             Open-source tools and research prototypes
           </p>
         </header>
 
-        <div className="grid gap-8">
+        <div style={{ display: 'grid', gap: '1rem' }}>
           {projects.map((project: any) => (
             <article 
               key={project.slug}
-              className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors"
+              style={{
+                padding: '1rem',
+                border: '1px solid var(--border)',
+                borderRadius: '0',
+                display: 'grid',
+                gap: '0.65rem'
+              }}
             >
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              <h2 style={{
+                margin: 0,
+                fontFamily: 'system-ui, sans-serif',
+                fontSize: '1.22rem',
+                lineHeight: 1.3,
+                fontWeight: 600,
+                color: 'var(--text)'
+              }}>
                 {project.title}
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p style={{ 
+                margin: 0, 
+                color: 'var(--text-soft)',
+                fontSize: '0.98rem'
+              }}>
                 {project.description}
               </p>
               {project.stack && project.stack.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                   {project.stack.map((tech: string) => (
                     <span 
                       key={tech}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                      style={{
+                        display: 'inline-flex',
+                        border: '1px solid rgba(63, 103, 84, 0.18)',
+                        background: 'rgba(63, 103, 84, 0.08)',
+                        color: 'var(--accent-strong)',
+                        padding: '0.16rem 0.48rem',
+                        borderRadius: '999px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        fontFamily: 'system-ui, sans-serif'
+                      }}
                     >
                       {tech}
                     </span>
                   ))}
                 </div>
               )}
-              <div className="flex gap-4 text-sm">
+              <div style={{ display: 'flex', gap: '1rem', fontSize: '0.92rem' }}>
                 {project.github && (
                   <a 
                     href={project.github}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    style={{ color: 'var(--accent)' }}
                   >
                     GitHub →
                   </a>
@@ -63,7 +110,7 @@ export default function Projects() {
                     href={project.demo}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    style={{ color: 'var(--accent)' }}
                   >
                     Demo →
                   </a>

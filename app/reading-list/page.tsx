@@ -5,63 +5,125 @@ export default function ReadingList() {
   const papers = getAllReading();
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        <nav className="mb-8">
+    <main>
+      <div style={{ maxWidth: '1100px', margin: '2rem auto 0', padding: '0 1.25rem' }}>
+        <nav style={{ marginBottom: '1.5rem' }}>
           <Link 
             href="/" 
-            className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            style={{ 
+              color: 'var(--text-soft)', 
+              fontSize: '0.92rem',
+              fontFamily: 'system-ui, sans-serif'
+            }}
           >
             ← Back to home
           </Link>
         </nav>
 
-        <header className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Reading List</h1>
-          <p className="text-xl text-gray-600">
+        <header style={{ marginBottom: '2rem' }}>
+          <h1 style={{
+            margin: 0,
+            color: 'var(--text)',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: 'clamp(2rem, 4vw, 3.25rem)',
+            lineHeight: 1.04,
+            letterSpacing: '-0.06em',
+            fontWeight: 600,
+            marginBottom: '0.65rem'
+          }}>
+            Reading List
+          </h1>
+          <p style={{ 
+            margin: 0,
+            maxWidth: '62ch',
+            color: 'var(--text-soft)',
+            fontSize: '1.02rem'
+          }}>
             Papers and resources on distributed systems and ML infrastructure
           </p>
         </header>
 
-        <div className="space-y-6">
+        <div style={{ display: 'grid' }}>
           {papers.map((paper: any) => (
             <article 
               key={paper.slug}
-              className="border-b border-gray-200 pb-6"
+              style={{
+                display: 'grid',
+                gap: '0.5rem',
+                padding: '1rem 0',
+                borderBottom: '1px solid var(--border)'
+              }}
             >
-              <div className="flex gap-4">
-                <div className="text-sm text-gray-400 font-mono w-12 flex-shrink-0">
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ 
+                  color: 'var(--muted)', 
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  width: '3rem',
+                  flexShrink: 0,
+                  fontFamily: 'system-ui, sans-serif'
+                }}>
                   {paper.year}
                 </div>
-                <div className="flex-1">
+                <div style={{ flex: 1 }}>
                   {paper.link ? (
                     <a 
                       href={paper.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                      style={{
+                        color: 'var(--text)',
+                        fontFamily: 'system-ui, sans-serif',
+                        fontSize: '1.08rem',
+                        lineHeight: 1.38,
+                        fontWeight: 600,
+                        letterSpacing: '-0.04em',
+                        display: 'block'
+                      }}
                     >
                       {paper.title} →
                     </a>
                   ) : (
-                    <h2 className="text-xl font-semibold text-gray-900">
+                    <h2 style={{
+                      margin: 0,
+                      color: 'var(--text)',
+                      fontFamily: 'system-ui, sans-serif',
+                      fontSize: '1.08rem',
+                      lineHeight: 1.38,
+                      fontWeight: 600,
+                      letterSpacing: '-0.04em'
+                    }}>
                       {paper.title}
                     </h2>
                   )}
-                  <p className="text-gray-600 text-sm mt-1">
+                  <p style={{ 
+                    margin: '0.3rem 0 0', 
+                    color: 'var(--text-soft)', 
+                    fontSize: '0.92rem' 
+                  }}>
                     {paper.authors} · {paper.venue}
                   </p>
                   {paper.note && (
-                    <p className="text-gray-500 text-sm mt-2 italic">
+                    <p style={{ 
+                      margin: '0.5rem 0 0', 
+                      color: 'var(--muted)', 
+                      fontSize: '0.9rem',
+                      fontStyle: 'italic'
+                    }}>
                       {paper.note}
                     </p>
                   )}
                   {paper.tags && paper.tags.length > 0 && (
-                    <div className="flex gap-2 mt-2">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.5rem' }}>
                       {paper.tags.map((tag: string) => (
                         <span 
                           key={tag}
-                          className="text-xs text-gray-400"
+                          style={{
+                            color: 'var(--muted)',
+                            fontSize: '0.75rem',
+                            fontFamily: 'system-ui, sans-serif'
+                          }}
                         >
                           #{tag}
                         </span>
