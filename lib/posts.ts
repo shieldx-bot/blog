@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
+import { TAGS } from './cache';
 import { getDatabase } from './mongodb';
 import { markdownToHtml as renderMarkdownToHtml } from './markdown';
 
@@ -120,11 +121,11 @@ function mergePosts(...sources: Post[][]): Post[] {
   });
 }
 
-export const getAllPosts = cache(async (): Promise<Post[]> => {
+export const getAllPosts = unstable_cache(async (): Promise<Post[]> => {
   const mongoPosts = await getMongoDbPosts();
 
   return mergePosts(getFileSystemPosts(), mongoPosts);
-});
+}, [], { revalidate: 300, tags: [TAGS.POSTS] });
 
 async function getPostBySlugFromFileSystem(slug: string): Promise<Post | null> {
   const fileNames = fs.readdirSync(postsDirectory);
@@ -137,7 +138,7 @@ async function getPostBySlugFromFileSystem(slug: string): Promise<Post | null> {
   return toPostFromFile(fileName);
 }
 
-export const getPostBySlug = cache(async (slug: string): Promise<Post | null> => {
+export const getPostBySlug = unstable_cache(async (slug: string): Promise<Post | null> => {
   const mongoPosts = await getMongoDbPosts();
   const mongoPost = mongoPosts.find((post) => post.slug === slug);
 
@@ -146,7 +147,7 @@ export const getPostBySlug = cache(async (slug: string): Promise<Post | null> =>
   }
 
   return getPostBySlugFromFileSystem(slug);
-});
+}, [], { revalidate: 300, tags: [TAGS.POSTS] });
 
 export async function markdownToHtml(markdown: string): Promise<string> {
   return renderMarkdownToHtml(markdown);

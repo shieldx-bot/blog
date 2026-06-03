@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { TAGS } from '@/lib/cache';
 import { cookies } from 'next/headers';
 import { ObjectId } from 'mongodb';
 import { getDatabase } from '@/lib/mongodb';
@@ -183,6 +185,8 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection('posts').insertOne(post);
 
+    await revalidateTag(TAGS.POSTS, 'max');
+
     return NextResponse.json({
       success: true,
       post: serializePost({ _id: result.insertedId, ...post }),
@@ -272,6 +276,8 @@ export async function PUT(request: NextRequest) {
       _id: new ObjectId(body.id),
     });
 
+    await revalidateTag(TAGS.POSTS, 'max');
+
     return NextResponse.json({
       success: true,
       modified: result.modifiedCount,
@@ -308,6 +314,8 @@ export async function DELETE(request: NextRequest) {
     const result = await db.collection('posts').deleteOne({
       _id: new ObjectId(id),
     });
+
+    await revalidateTag(TAGS.POSTS, 'max');
 
     return NextResponse.json({
       success: true,

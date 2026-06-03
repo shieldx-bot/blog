@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
+import { TAGS } from './cache';
 import { ObjectId } from 'mongodb';
 import { getDatabase } from './mongodb';
 
@@ -388,27 +389,27 @@ function loadFileReading(): AdminReadingItem[] {
     .map((fileName) => fileReadingFromMatter(fileName));
 }
 
-export const getAdminProjects = cache(async (): Promise<AdminProject[]> => {
+export const getAdminProjects = unstable_cache(async (): Promise<AdminProject[]> => {
   const fileProjects = loadFileProjects();
   const { visibleBySlug, hiddenSlugs } = await loadProjectState();
 
   return sortProjects(mergeBySlug(fileProjects, visibleBySlug, hiddenSlugs));
-});
+}, [], { revalidate: 300, tags: [TAGS.PROJECTS] });
 
-export const getAdminReading = cache(async (): Promise<AdminReadingItem[]> => {
+export const getAdminReading = unstable_cache(async (): Promise<AdminReadingItem[]> => {
   const fileReading = loadFileReading();
   const { visibleBySlug, hiddenSlugs } = await loadReadingState();
 
   return sortReading(mergeBySlug(fileReading, visibleBySlug, hiddenSlugs));
-});
+}, [], { revalidate: 300, tags: [TAGS.READING] });
 
-export const getAllProjects = cache(async (): Promise<Project[]> => {
+export const getAllProjects = unstable_cache(async (): Promise<Project[]> => {
   return (await getAdminProjects()).map(publicProjectProjection);
-});
+}, [], { revalidate: 300, tags: [TAGS.PROJECTS] });
 
-export const getAllReading = cache(async (): Promise<ReadingItem[]> => {
+export const getAllReading = unstable_cache(async (): Promise<ReadingItem[]> => {
   return (await getAdminReading()).map(publicReadingProjection);
-});
+}, [], { revalidate: 300, tags: [TAGS.READING] });
 
 export function slugify(value: string) {
   return value

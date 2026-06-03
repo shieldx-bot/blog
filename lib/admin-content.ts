@@ -1,5 +1,7 @@
 import { ObjectId, type Collection } from 'mongodb';
 import { getDatabase } from './mongodb';
+import { revalidateTag } from 'next/cache';
+import { TAGS } from './cache';
 import {
   parseListField,
   slugify,
@@ -243,6 +245,8 @@ export async function saveProject(payload: ProjectPayload, editedBy: string): Pr
       throw new Error('Project update failed');
     }
 
+    await revalidateTag(TAGS.PROJECTS, 'max');
+
     return serializeProject(updated);
   }
 
@@ -269,7 +273,9 @@ export async function saveProject(payload: ProjectPayload, editedBy: string): Pr
       throw new Error('Project update failed');
     }
 
-    return serializeProject(updated);
+      await revalidateTag(TAGS.PROJECTS, 'max');
+
+      return serializeProject(updated);
   }
 
   const inserted = await collection.insertOne(baseFields as unknown as Parameters<typeof collection.insertOne>[0]);
@@ -278,6 +284,7 @@ export async function saveProject(payload: ProjectPayload, editedBy: string): Pr
   if (!created) {
     throw new Error('Project creation failed');
   }
+  await revalidateTag(TAGS.PROJECTS, 'max');
 
   return serializeProject(created);
 }
@@ -338,6 +345,8 @@ export async function saveReading(payload: ReadingPayload, editedBy: string): Pr
       throw new Error('Reading update failed');
     }
 
+    await revalidateTag(TAGS.READING, 'max');
+
     return serializeReading(updated);
   }
 
@@ -364,7 +373,9 @@ export async function saveReading(payload: ReadingPayload, editedBy: string): Pr
       throw new Error('Reading update failed');
     }
 
-    return serializeReading(updated);
+      await revalidateTag(TAGS.READING, 'max');
+
+      return serializeReading(updated);
   }
 
   const inserted = await collection.insertOne(baseFields as unknown as Parameters<typeof collection.insertOne>[0]);
@@ -373,6 +384,7 @@ export async function saveReading(payload: ReadingPayload, editedBy: string): Pr
   if (!created) {
     throw new Error('Reading creation failed');
   }
+  await revalidateTag(TAGS.READING, 'max');
 
   return serializeReading(created);
 }
@@ -394,6 +406,7 @@ export async function deleteProject(payload: { id?: string; slug?: string }, edi
   }
 
   await hideSlug(collection, slug, editedBy);
+  await revalidateTag(TAGS.PROJECTS, 'max');
 
   return slug;
 }
@@ -415,6 +428,7 @@ export async function deleteReading(payload: { id?: string; slug?: string }, edi
   }
 
   await hideSlug(collection, slug, editedBy);
+  await revalidateTag(TAGS.READING, 'max');
 
   return slug;
 }
