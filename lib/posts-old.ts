@@ -8,7 +8,6 @@ import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
 import rehypeKatex from 'rehype-katex';
 import rehypeStringify from 'rehype-stringify';
-import { getDatabase } from './mongodb';
 
 const postsDirectory = path.join(process.cwd(), 'content/posts');
 const projectsDirectory = path.join(process.cwd(), 'content/projects');
@@ -25,31 +24,7 @@ export interface Post {
   content: string;
 }
 
-async function getMongoDbPosts(): Promise<Post[]> {
-  try {
-    const db = await getDatabase();
-    const posts = await db.collection('posts')
-      .find({ published: { $ne: false } })
-      .sort({ pubDate: -1 })
-      .toArray();
-
-    return posts.map((doc: any) => ({
-      slug: doc.slug,
-      title: doc.title,
-      description: doc.description,
-      pubDate: doc.pubDate?.toISOString() || new Date().toISOString(),
-      updatedDate: doc.updatedDate?.toISOString(),
-      author: doc.author,
-      tags: doc.tags || [],
-      content: doc.bodyMarkdown || ''
-    }));
-  } catch (error) {
-    console.warn('MongoDB not available, falling back to file system');
-    return [];
-  }
-}
-
-function getFileSystemPosts(): Post[] {
+export function getAllPosts(): Post[] {
   const fileNames = fs.readdirSync(postsDirectory);
   const posts = fileNames
     .filter(fileName => fileName.endsWith('.md') || fileName.endsWith('.mdx'))
@@ -74,16 +49,6 @@ function getFileSystemPosts(): Post[] {
   return posts.sort((a, b) => {
     return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
   });
-}
-
-export async function getAllPosts(): Promise<Post[]> {
-  const mongoPosts = await getMongoDbPosts();
-  
-  if (mongoPosts.length > 0) {
-    return mongoPosts;
-  }
-  
-  return getFileSystemPosts();
 }
 
 export function getPostBySlug(slug: string): Post | null {
